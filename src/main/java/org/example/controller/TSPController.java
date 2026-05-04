@@ -5,7 +5,7 @@ import javafx.geometry.Point2D;
 import javafx.scene.Parent;
 import javafx.scene.control.*; // includes SplitPane
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
+import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import org.example.model.HullOrderChecker;
@@ -37,6 +37,7 @@ public class TSPController {
     private final CheckBox showAngles = new CheckBox("Show angles");
     private final CheckBox highlightHullPoints = new CheckBox("Hull points");
     private final CheckBox showHullPath = new CheckBox("Hull path");
+    private final CheckBox spikeReorder = new CheckBox("Spike reorder");
 
     private final Button solveBtn = new Button("Solve");
     private final Button clearBtn = new Button("Clear points");
@@ -86,6 +87,7 @@ public class TSPController {
         showAngles.setStyle("-fx-text-fill: #ddd;");
         highlightHullPoints.setStyle("-fx-text-fill: #ddd;");
         showHullPath.setStyle("-fx-text-fill: #ddd;");
+        spikeReorder.setStyle("-fx-text-fill: #ddd;");
 
         showComCenteredCircles.selectedProperty().addListener((obs, ov, nv) -> solveCurrentPoints());
         showAverageComCircle.selectedProperty().addListener((obs, ov, nv) -> solveCurrentPoints());
@@ -94,6 +96,7 @@ public class TSPController {
         showAngles.selectedProperty().addListener((obs, ov, nv) -> solveCurrentPoints());
         highlightHullPoints.selectedProperty().addListener((obs, ov, nv) -> solveCurrentPoints());
         showHullPath.selectedProperty().addListener((obs, ov, nv) -> solveCurrentPoints());
+        spikeReorder.selectedProperty().addListener((obs, ov, nv) -> solveCurrentPoints());
 
         manualMode.selectedProperty().addListener((obs, oldV, newV) -> {
             if (newV) {
@@ -110,8 +113,8 @@ public class TSPController {
         clearBtn.setOnAction(e -> clearManual());
         solveBtn.setOnAction(e -> solveCurrentPoints());
 
-        HBox top = new HBox(
-                12,
+        FlowPane top = new FlowPane(12, 8);
+        top.getChildren().addAll(
                 nLabel, nSlider,
                 regenBtn,
                 manualMode,
@@ -122,12 +125,14 @@ public class TSPController {
                 showAngles,
                 highlightHullPoints,
                 showHullPath,
+                spikeReorder,
                 solveBtn,
                 clearBtn
         );
         top.setPadding(new Insets(10));
         top.setStyle("-fx-background-color: #0f0f0f; -fx-border-color: #2b2b2b; -fx-border-width: 0 0 1 0;");
         nLabel.setStyle("-fx-text-fill: #ddd;");
+        nSlider.setPrefWidth(180);
 
         bruteLabel.setStyle("-fx-text-fill: #ddd; -fx-font-size: 18;");
         heurLabel.setStyle("-fx-text-fill: #ddd; -fx-font-size: 18;");
@@ -152,12 +157,20 @@ public class TSPController {
         rightBox.setPadding(new Insets(10));
         leftBox.setStyle("-fx-background-color: #0b0b0b;");
         rightBox.setStyle("-fx-background-color: #0b0b0b;");
+        leftBox.setMinWidth(560);
+        rightBox.setMinWidth(560);
 
         SplitPane split = new SplitPane(leftBox, rightBox);
         split.setDividerPositions(0.5);
+        split.setMinWidth(1120);
+
+        ScrollPane scroll = new ScrollPane(split);
+        scroll.setFitToHeight(true);
+        scroll.setPannable(true);
+        scroll.setStyle("-fx-background: #0b0b0b; -fx-background-color: #0b0b0b;");
 
         root.setTop(top);
-        root.setCenter(split);
+        root.setCenter(scroll);
         root.setStyle("-fx-background-color: #0b0b0b;");
     }
 
@@ -308,7 +321,7 @@ public class TSPController {
             right.clearComCenteredCircles();
         }
 
-        TSPHeuristic.Result heurRes = TSPHeuristic.solveByAngle(points, com);
+        TSPHeuristic.Result heurRes = TSPHeuristic.solveByAngle(points, com, spikeReorder.isSelected());
         HullOrderChecker.CheckResult hullCheck = HullOrderChecker.check(points, heurRes.order);
         System.out.printf("HullOrder[Heuristic]: %s (n=%d, hullCorners=%d)%n",
                 hullCheck.follows() ? "PASS" : "FAIL",
